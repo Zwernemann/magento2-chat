@@ -1,0 +1,79 @@
+<?php
+/** @var \Zwernemann\ConversionalCommerce\Block\Adminhtml\Conversation\View $block */
+$conversation = $block->getConversation();
+$messages     = $block->getMessages();
+?>
+<div class="cc-conversation-view" style="max-width:900px;margin:20px auto;font-family:sans-serif;">
+
+    <p><a href="<?= $block->escapeUrl($block->getBackUrl()) ?>" style="color:#007bff;">&larr; Back to Conversations</a></p>
+
+    <?php if ($conversation): ?>
+    <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;padding:20px;margin-bottom:20px;">
+        <h2 style="margin-top:0;">
+            <?= $block->escapeHtml(__('Conversation #%1', $conversation->getId())) ?>
+        </h2>
+        <table style="width:100%;border-collapse:collapse;">
+            <tr>
+                <th style="text-align:left;padding:4px 8px;width:150px;"><?= $block->escapeHtml(__('Customer')) ?></th>
+                <td style="padding:4px 8px;"><?= $block->escapeHtml($conversation->getCustomerEmail()) ?></td>
+            </tr>
+            <tr>
+                <th style="text-align:left;padding:4px 8px;"><?= $block->escapeHtml(__('Channel')) ?></th>
+                <td style="padding:4px 8px;"><?= $block->escapeHtml($conversation->getChannelType()) ?></td>
+            </tr>
+            <tr>
+                <th style="text-align:left;padding:4px 8px;"><?= $block->escapeHtml(__('Status')) ?></th>
+                <td style="padding:4px 8px;">
+                    <span style="
+                        display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;
+                        background:<?= $conversation->getStatus() === 'open' ? '#28a745' : ($conversation->getStatus() === 'pending' ? '#ffc107' : '#6c757d') ?>;
+                        color:#fff;">
+                        <?= $block->escapeHtml($conversation->getStatus()) ?>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <th style="text-align:left;padding:4px 8px;"><?= $block->escapeHtml(__('Created')) ?></th>
+                <td style="padding:4px 8px;"><?= $block->escapeHtml($conversation->getCreatedAt()) ?></td>
+            </tr>
+            <tr>
+                <th style="text-align:left;padding:4px 8px;"><?= $block->escapeHtml(__('Last Activity')) ?></th>
+                <td style="padding:4px 8px;"><?= $block->escapeHtml($conversation->getUpdatedAt()) ?></td>
+            </tr>
+        </table>
+    </div>
+
+    <h3><?= $block->escapeHtml(__('Messages')) ?></h3>
+
+    <div class="cc-messages" style="display:flex;flex-direction:column;gap:12px;">
+        <?php foreach ($messages as $msg): ?>
+        <?php $isInbound = ($msg['direction'] ?? '') === 'inbound'; ?>
+        <div style="
+            max-width:80%;
+            align-self:<?= $isInbound ? 'flex-start' : 'flex-end' ?>;
+            background:<?= $isInbound ? '#e3f2fd' : '#e8f5e9' ?>;
+            border-radius:<?= $isInbound ? '4px 16px 16px 16px' : '16px 4px 16px 16px' ?>;
+            padding:12px 16px;
+            box-shadow:0 1px 3px rgba(0,0,0,.1);
+        ">
+            <div style="font-size:11px;color:#666;margin-bottom:4px;">
+                <strong><?= $isInbound ? $block->escapeHtml(__('Customer')) : $block->escapeHtml(__('System')) ?></strong>
+                <?php if (!empty($msg['intent'])): ?>
+                — <em>Intent: <?= $block->escapeHtml($msg['intent']) ?></em>
+                <?php endif; ?>
+                <span style="float:right;"><?= $block->escapeHtml(substr($msg['created_at'] ?? '', 0, 16)) ?></span>
+            </div>
+            <div style="white-space:pre-wrap;word-break:break-word;">
+                <?= nl2br($block->escapeHtml(strip_tags($msg['content_text'] ?? ''))) ?>
+            </div>
+        </div>
+        <?php endforeach; ?>
+        <?php if (empty($messages)): ?>
+        <p style="color:#666;"><?= $block->escapeHtml(__('No messages yet.')) ?></p>
+        <?php endif; ?>
+    </div>
+
+    <?php else: ?>
+    <p><?= $block->escapeHtml(__('Conversation not found.')) ?></p>
+    <?php endif; ?>
+</div>

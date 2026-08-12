@@ -1,0 +1,195 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <!-- API Interface Preferences -->
+    <preference for="Zwernemann\Chat\Api\MessageProcessorInterface"
+                type="Zwernemann\Chat\Model\MessageProcessor"/>
+
+    <!-- Shop-system adapter layer: swap these preferences to migrate to a different platform -->
+    <preference for="Zwernemann\Chat\Api\Shop\CustomerProviderInterface"
+                type="Zwernemann\Chat\Model\Magento\CustomerLookup"/>
+    <preference for="Zwernemann\Chat\Api\Shop\ProductLookupInterface"
+                type="Zwernemann\Chat\Model\Magento\ProductSearch"/>
+    <preference for="Zwernemann\Chat\Api\Shop\OrderHistoryInterface"
+                type="Zwernemann\Chat\Model\Magento\OrderHistory"/>
+    <preference for="Zwernemann\Chat\Api\Shop\CartServiceInterface"
+                type="Zwernemann\Chat\Model\Magento\CartManager"/>
+
+    <!-- Conversation Repository -->
+    <preference for="Zwernemann\Chat\Api\Data\ConversationRepositoryInterface"
+                type="Zwernemann\Chat\Model\ConversationRepository"/>
+
+    <!-- LLM Provider: LlmClientResolver implements the interface and delegates to the active provider -->
+    <preference for="Zwernemann\Chat\Api\LlmClientInterface"
+                type="Zwernemann\Chat\Model\Llm\LlmClientResolver"/>
+
+    <preference for="Zwernemann\Chat\Api\Data\UnifiedMessageInterface"
+                type="Zwernemann\Chat\Model\Message\UnifiedMessage"/>
+
+    <preference for="Zwernemann\Chat\Api\Data\ConversationInterface"
+                type="Zwernemann\Chat\Model\Conversation"/>
+
+    <!--
+        Extension seams. The free Chat module ships null/log-only defaults so the pipeline
+        runs standalone. The premium module overrides these preferences with real
+        implementations (escalation to a human team, error e-mails) via di.xml merge.
+    -->
+    <preference for="Zwernemann\Chat\Api\EscalationHandlerInterface"
+                type="Zwernemann\Chat\Model\Escalation\NullEscalationHandler"/>
+    <preference for="Zwernemann\Chat\Api\ErrorNotifierInterface"
+                type="Zwernemann\Chat\Model\Notification\LogErrorNotifier"/>
+
+    <!-- Custom logger: writes to var/log/zwernemann_chat.log -->
+    <type name="Zwernemann\Chat\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">zwernemann_chat</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="cc" xsi:type="object">Zwernemann\Chat\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Inject the Chat logger into every pipeline class -->
+    <type name="Zwernemann\Chat\Model\Attachment\AttachmentProcessor">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\MessageProcessor">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+            <argument name="attachmentProcessor" xsi:type="object">Zwernemann\Chat\Model\Attachment\AttachmentProcessor</argument>
+            <argument name="queryBuilder" xsi:type="object">Zwernemann\Chat\Model\Rag\ConversationalQueryBuilder</argument>
+            <argument name="toolExecutor" xsi:type="object">Zwernemann\Chat\Model\Pipeline\MagentoToolExecutor</argument>
+            <argument name="paymentInfoProvider" xsi:type="object">Zwernemann\Chat\Model\Magento\PaymentInfoProvider</argument>
+            <!-- Fallback channel when a message's channel type has no registered channel.
+                 Null in Chat (WebChat answers synchronously via HTTP); premium may override. -->
+            <argument name="defaultChannel" xsi:type="object">Zwernemann\Chat\Model\Channel\NullChannel</argument>
+            <argument name="channels" xsi:type="array">
+                <item name="webchat" xsi:type="object">Zwernemann\Chat\Model\Channel\WebChat\WebChatChannel</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Rag\ConversationalQueryBuilder">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Llm\ContextBuilder">
+        <arguments>
+            <argument name="toolRegistry" xsi:type="object">Zwernemann\Chat\Model\Llm\MagentoToolRegistry</argument>
+        </arguments>
+    </type>
+    <!-- LLM provider pool: the free module ships Anthropic only. The premium
+         module merges Mistral and Gemini into this pool. -->
+    <type name="Zwernemann\Chat\Model\Llm\LlmClientResolver">
+        <arguments>
+            <argument name="clients" xsi:type="array">
+                <item name="anthropic" xsi:type="object">Zwernemann\Chat\Model\Llm\AnthropicClient</item>
+            </argument>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Llm\AnthropicClient">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Llm\IntentProcessor">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Rag\SearchTermExtractor">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Rag\ProductIndexer">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+            <argument name="configurableType" xsi:type="object">Magento\ConfigurableProduct\Model\Product\Type\Configurable</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Rag\VoyageClient">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Rag\PineconeClient">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Magento\CatalogSearch">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Magento\CustomerLookup">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Magento\CartManager">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+            <argument name="configurableType" xsi:type="object">Magento\ConfigurableProduct\Model\Product\Type\Configurable</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Magento\OrderHistory">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Magento\ProductSearch">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Pipeline\CartActionHandler">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Pipeline\MagentoToolExecutor">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Magento\PaymentInfoProvider">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+    <type name="Zwernemann\Chat\Model\Notification\LogErrorNotifier">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <type name="Zwernemann\Chat\Controller\Message\Send">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <type name="Zwernemann\Chat\Cron\IndexProducts">
+        <arguments>
+            <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
+        </arguments>
+    </type>
+
+    <!-- CLI Commands -->
+    <type name="Magento\Framework\Console\CommandList">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="cc_index_products" xsi:type="object">
+                    Zwernemann\Chat\Console\Command\IndexProductsCommand
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+</config>

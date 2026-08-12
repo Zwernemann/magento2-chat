@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Zwernemann_Chat::main"
+             title="Chat"
+             module="Zwernemann_Chat"
+             sortOrder="90"
+             resource="Zwernemann_Chat::conversations"
+             parent="Magento_Sales::sales"/>
+
+        <add id="Zwernemann_Chat::dashboard"
+             title="Dashboard"
+             module="Zwernemann_Chat"
+             sortOrder="5"
+             action="zwernemann_chat/dashboard/index"
+             resource="Zwernemann_Chat::dashboard"
+             parent="Zwernemann_Chat::main"/>
+
+        <add id="Zwernemann_Chat::conversations"
+             title="Conversations"
+             module="Zwernemann_Chat"
+             sortOrder="10"
+             action="zwernemann_chat/index/index"
+             resource="Zwernemann_Chat::conversations"
+             parent="Zwernemann_Chat::main"/>
+    </menu>
+</config>

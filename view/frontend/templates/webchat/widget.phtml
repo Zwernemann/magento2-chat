@@ -1,0 +1,101 @@
+<?php
+/**
+ * @var \Zwernemann\Chat\Block\Frontend\WebChatWidget $block
+ *
+ * This block is FPC-safe: no session/customer data in PHP.
+ * Login check is performed in JavaScript via Magento customer-data sections.
+ */
+if (!$block->isEnabled()) {
+    return;
+}
+?>
+<div id="cc-chat-root"
+     data-config="<?= $block->escapeHtmlAttr($block->getWidgetConfigJson()) ?>">
+
+    <!-- Floating action button — hidden by default; JS shows it after login check -->
+    <button id="cc-chat-fab" class="cc-chat-fab cc-chat-fab--hidden"
+            aria-label="<?= $block->escapeHtmlAttr($block->getButtonLabel()) ?>">
+        <svg class="cc-fab-icon-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <svg class="cc-fab-icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+        <span class="cc-fab-label"><?= $block->escapeHtml($block->getButtonLabel()) ?></span>
+    </button>
+
+    <!-- Backdrop -->
+    <div id="cc-chat-backdrop" class="cc-chat-backdrop" aria-hidden="true"></div>
+
+    <!-- Chat modal -->
+    <div id="cc-chat-modal" class="cc-chat-modal" role="dialog" aria-modal="true" aria-hidden="true"
+         aria-label="<?= $block->escapeHtmlAttr($block->getTitle()) ?>">
+
+        <div class="cc-chat-header">
+            <div class="cc-chat-header-left">
+                <div class="cc-chat-avatar" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="cc-chat-header-title"><?= $block->escapeHtml($block->getTitle()) ?></div>
+                    <div class="cc-chat-header-subtitle">AI Order Assistant</div>
+                </div>
+            </div>
+            <button id="cc-chat-close" class="cc-chat-close-btn" aria-label="Close chat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+
+        <div id="cc-chat-messages" class="cc-chat-messages" role="log" aria-live="polite" aria-label="Chat messages"></div>
+
+        <div id="cc-chat-typing" class="cc-chat-typing" style="display:none" aria-label="Assistant is typing" aria-live="polite">
+            <div class="cc-typing-bubble">
+                <span></span><span></span><span></span>
+            </div>
+            <div id="cc-status-text" class="cc-status-text"></div>
+        </div>
+
+        <form id="cc-chat-form" class="cc-chat-input-area" novalidate autocomplete="off">
+            <!-- form_key is injected by JS from Magento's own DOM input (FPC-safe) -->
+            <input type="hidden" id="cc-form-key" name="form_key" value="">
+            <input type="hidden" id="cc-session-id" name="session_id" value="">
+
+            <div id="cc-attachments-preview" class="cc-attachments-preview" style="display:none"></div>
+
+            <div class="cc-input-row">
+                <label class="cc-attach-label" title="Attach file (PDF, Excel, Word)" aria-label="Attach file">
+                    <input type="file" id="cc-file-input" name="attachments[]"
+                           accept=".pdf,.xlsx,.xls,.docx,.doc" multiple
+                           class="cc-file-input-hidden">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                    </svg>
+                </label>
+
+                <textarea id="cc-message-input" name="message"
+                          class="cc-message-textarea"
+                          placeholder="Type your message..."
+                          rows="1"
+                          aria-label="Your message"
+                          maxlength="4000"></textarea>
+
+                <button type="submit" id="cc-send-btn" class="cc-send-btn" aria-label="Send message">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="22" y1="2" x2="11" y2="13"/>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<link rel="stylesheet" href="<?= $block->escapeUrl($block->getViewFileUrl('Zwernemann_Chat::css/cc-chat-widget.css')) ?>">
+
+<?php /* Plain deferred script: framework-agnostic so it runs on both Luma and Hyvä
+         (Hyvä ships no RequireJS, so the previous x-magento-init never executed). */ ?>
+<script src="<?= $block->escapeUrl($block->getViewFileUrl('Zwernemann_Chat::js/cc-chat-widget.js')) ?>" defer></script>

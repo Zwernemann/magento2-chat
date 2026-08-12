@@ -1,0 +1,632 @@
+/* ── Conversational Commerce Chat Widget ── */
+
+:root {
+    --cc-primary:       #1a73e8;
+    --cc-primary-dark:  #1558b0;
+    --cc-bg:            #ffffff;
+    --cc-surface:       #f8f9fa;
+    --cc-border:        #e0e0e0;
+    --cc-text:          #202124;
+    --cc-text-muted:    #5f6368;
+    --cc-user-bg:       var(--cc-primary);
+    --cc-user-text:     #ffffff;
+    --cc-ai-bg:         #f1f3f4;
+    --cc-ai-text:       #202124;
+    --cc-radius:        16px;
+    --cc-fab-size:      56px;
+    --cc-shadow:        0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.12);
+    --cc-z:             99998;
+}
+
+/* ── Reset within widget scope ──
+   Scoped so the widget renders identically on Luma and on Hyvä, whose Tailwind
+   "preflight" applies a very different global baseline (border-width:0,
+   svg{display:block}, button background reset, normalized headings …). All rules
+   below are intentionally scoped to #cc-chat-root so they never leak into the
+   surrounding theme. */
+#cc-chat-root *,
+#cc-chat-root *::before,
+#cc-chat-root *::after {
+    box-sizing: border-box;
+    margin: 0;
+}
+
+#cc-chat-root {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    color: var(--cc-text);
+    text-align: left;
+}
+
+/* Explicit padding reset for form elements only — prevents Magento base styles
+   from adding unwanted padding to buttons/inputs while keeping component paddings intact */
+#cc-chat-root button,
+#cc-chat-root input,
+#cc-chat-root textarea {
+    padding: 0;
+}
+
+/* SVG icons: Hyvä's preflight forces svg{display:block}; normalize so icon
+   sizing/alignment is identical on both themes. (No component rule sets svg
+   display, so this never fights the per-icon width/height rules below.) */
+#cc-chat-root svg {
+    vertical-align: middle;
+}
+
+/* ── FAB hidden until JS confirms customer is logged in ── */
+.cc-chat-fab--hidden {
+    display: none !important;
+}
+
+/* ── FAB button ──
+   Circular, icon-only. The label text is intentionally hidden (accessible name
+   comes from the button's aria-label). Prefixed with #cc-chat-root so the
+   padding here wins over the scoped `#cc-chat-root button { padding: 0 }` reset,
+   which otherwise beats a plain #id selector on specificity. */
+#cc-chat-root #cc-chat-fab {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: var(--cc-z);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--cc-fab-size);
+    height: var(--cc-fab-size);
+    padding: 0;
+    background: var(--cc-primary);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,.24);
+    transition: background .15s, transform .15s, box-shadow .15s;
+}
+
+#cc-chat-fab:hover {
+    background: var(--cc-primary-dark);
+    box-shadow: 0 6px 20px rgba(0,0,0,.3);
+    transform: translateY(-1px);
+}
+
+#cc-chat-fab:active {
+    transform: translateY(0);
+}
+
+#cc-chat-fab svg {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+/* Label kept in the DOM for legacy markup but never shown — the FAB is icon-only. */
+.cc-fab-label {
+    display: none;
+}
+
+/* ── Backdrop ── */
+.cc-chat-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: var(--cc-z);
+    background: rgba(0,0,0,.45);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    animation: cc-fade-in .2s ease;
+}
+
+.cc-chat-backdrop.cc-open {
+    display: block;
+}
+
+/* ── Modal ── */
+.cc-chat-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(.96);
+    z-index: calc(var(--cc-z) + 1);
+    width: min(82vw, 900px);
+    height: min(82vh, 760px);
+    background: var(--cc-bg);
+    border-radius: var(--cc-radius);
+    box-shadow: var(--cc-shadow);
+    flex-direction: column;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity .2s ease, transform .2s ease;
+}
+
+.cc-chat-modal.cc-open {
+    display: flex;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* ── Header ── */
+.cc-chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: var(--cc-primary);
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.cc-chat-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cc-chat-avatar {
+    width: 38px;
+    height: 38px;
+    background: rgba(255,255,255,.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.cc-chat-avatar svg {
+    width: 22px;
+    height: 22px;
+    fill: #fff;
+}
+
+.cc-chat-header-title {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.cc-chat-header-subtitle {
+    font-size: 12px;
+    opacity: .8;
+    margin-top: 1px;
+}
+
+.cc-chat-close-btn {
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: .85;
+    transition: background .15s, opacity .15s;
+    flex-shrink: 0;
+}
+
+.cc-chat-close-btn:hover {
+    background: rgba(255,255,255,.15);
+    opacity: 1;
+}
+
+.cc-chat-close-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* ── Messages area ── */
+.cc-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 18px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+}
+
+.cc-chat-messages::-webkit-scrollbar {
+    width: 4px;
+}
+
+.cc-chat-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.cc-chat-messages::-webkit-scrollbar-thumb {
+    background: var(--cc-border);
+    border-radius: 2px;
+}
+
+/* ── Message bubbles ── */
+.cc-msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+    animation: cc-slide-in .18s ease;
+}
+
+.cc-msg-user {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+.cc-msg-ai {
+    align-self: flex-start;
+    align-items: flex-start;
+}
+
+.cc-bubble {
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.55;
+    word-break: break-word;
+}
+
+.cc-msg-user .cc-bubble {
+    background: var(--cc-user-bg);
+    color: var(--cc-user-text);
+    border-bottom-right-radius: 4px;
+}
+
+.cc-msg-ai .cc-bubble {
+    background: var(--cc-ai-bg);
+    color: var(--cc-ai-text);
+    border-bottom-left-radius: 4px;
+}
+
+.cc-bubble p { margin-bottom: 6px; }
+.cc-bubble p:last-child { margin-bottom: 0; }
+.cc-bubble strong { font-weight: 600; }
+.cc-bubble ul, .cc-bubble ol { padding-left: 18px; margin: 4px 0; }
+.cc-bubble li { margin-bottom: 2px; }
+
+.cc-bubble img {
+    max-width: 160px;
+    border-radius: 6px;
+    margin: 6px 0;
+    display: block;
+}
+
+.cc-bubble table {
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 8px 0;
+    width: 100%;
+}
+
+.cc-bubble td,
+.cc-bubble th {
+    padding: 5px 10px;
+    border: 1px solid var(--cc-border);
+    text-align: left;
+    vertical-align: top;
+}
+
+.cc-bubble th {
+    background: var(--cc-surface);
+    font-weight: 600;
+}
+
+.cc-bubble tr:nth-child(even) td {
+    background: rgba(0,0,0,.02);
+}
+
+.cc-bubble hr {
+    border: none;
+    border-top: 1px solid var(--cc-border);
+    margin: 8px 0;
+}
+
+.cc-msg-time {
+    font-size: 11px;
+    color: var(--cc-text-muted);
+    margin-top: 3px;
+    padding: 0 4px;
+}
+
+/* File attachment tags inside user bubble */
+.cc-file-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.cc-file-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    background: rgba(255,255,255,.2);
+    border-radius: 10px;
+    padding: 2px 8px;
+}
+
+.cc-msg-ai .cc-file-tag {
+    background: rgba(0,0,0,.08);
+}
+
+/* ── Typing indicator ── */
+.cc-chat-typing {
+    padding: 4px 18px 8px;
+    flex-shrink: 0;
+}
+
+.cc-typing-bubble {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--cc-ai-bg);
+    border-radius: 18px;
+    border-bottom-left-radius: 4px;
+    padding: 10px 14px;
+}
+
+.cc-typing-bubble span {
+    display: block;
+    width: 7px;
+    height: 7px;
+    background: var(--cc-text-muted);
+    border-radius: 50%;
+    animation: cc-bounce .9s infinite;
+}
+
+.cc-typing-bubble span:nth-child(2) { animation-delay: .15s; }
+.cc-typing-bubble span:nth-child(3) { animation-delay: .3s; }
+
+.cc-status-text {
+    font-size: 11px;
+    color: var(--cc-text-muted);
+    margin-top: 5px;
+    min-height: 14px;
+    font-style: italic;
+    opacity: 0.85;
+}
+
+/* ── Input area ── */
+.cc-chat-input-area {
+    border-top: 1px solid var(--cc-border);
+    padding: 10px 14px 12px;
+    background: var(--cc-bg);
+    flex-shrink: 0;
+}
+
+.cc-attachments-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.cc-preview-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--cc-surface);
+    border: 1px solid var(--cc-border);
+    border-radius: 20px;
+    padding: 3px 10px 3px 8px;
+    font-size: 12px;
+    color: var(--cc-text);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cc-preview-badge svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    color: var(--cc-text-muted);
+}
+
+.cc-preview-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--cc-text-muted);
+    padding: 0;
+    display: flex;
+    margin-left: 2px;
+    line-height: 1;
+}
+
+.cc-preview-remove:hover { color: #d32f2f; }
+
+.cc-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+/* Attach button */
+.cc-attach-label {
+    cursor: pointer;
+    color: var(--cc-text-muted);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: color .15s, background .15s;
+    margin-bottom: 1px;
+}
+
+.cc-attach-label:hover {
+    color: var(--cc-primary);
+    background: rgba(26,115,232,.08);
+}
+
+.cc-attach-label svg {
+    width: 20px;
+    height: 20px;
+}
+
+.cc-file-input-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Textarea —
+   Prefixed with #cc-chat-root so its padding wins over the scoped
+   `#cc-chat-root textarea { padding: 0 }` reset. Without the prefix the reset
+   (ID + type) outranks a plain class selector, collapsing the padding to 0 and
+   pushing the placeholder into the rounded border. */
+#cc-chat-root .cc-message-textarea {
+    flex: 1;
+    border: 1px solid var(--cc-border);
+    border-radius: 20px;
+    padding: 9px 16px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--cc-text);
+    background: var(--cc-surface);
+    resize: none;
+    outline: none;
+    min-height: 40px;
+    max-height: 120px;
+    overflow-y: auto;
+    line-height: 1.45;
+    transition: border-color .15s;
+}
+
+.cc-message-textarea:focus {
+    border-color: var(--cc-primary);
+    background: #fff;
+}
+
+.cc-message-textarea::placeholder {
+    color: var(--cc-text-muted);
+}
+
+/* Send button */
+.cc-send-btn {
+    background: var(--cc-primary);
+    border: none;
+    color: #fff;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background .15s, transform .1s;
+}
+
+.cc-send-btn:hover { background: var(--cc-primary-dark); }
+.cc-send-btn:active { transform: scale(.93); }
+.cc-send-btn:disabled { background: var(--cc-border); cursor: not-allowed; }
+
+.cc-send-btn svg {
+    width: 17px;
+    height: 17px;
+}
+
+/* ── Animations ── */
+@keyframes cc-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes cc-slide-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cc-bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30%            { transform: translateY(-5px); }
+}
+
+/* ── LLM Debug Blocks ── */
+.cc-debug-block {
+    align-self: stretch;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 11px;
+    animation: cc-slide-in .18s ease;
+    margin: 2px 0 6px;
+}
+
+.cc-debug-title {
+    background: #161b22;
+    color: #79c0ff;
+    padding: 7px 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+    border-bottom: 1px solid #30363d;
+    letter-spacing: 0.2px;
+}
+
+.cc-debug-toggle {
+    cursor: pointer;
+    padding: 5px 12px;
+    color: #8b949e;
+    background: #161b22;
+    font-size: 11px;
+    font-weight: 600;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-top: 1px solid #21262d;
+}
+
+.cc-debug-toggle:hover { background: #1c2128; color: #c9d1d9; }
+
+.cc-debug-chevron {
+    font-size: 8px;
+    color: #6e7681;
+    flex-shrink: 0;
+}
+
+.cc-debug-pre {
+    margin: 0;
+    padding: 10px 12px;
+    color: #c9d1d9;
+    white-space: pre-wrap;
+    word-break: break-all;
+    overflow-x: auto;
+    max-height: 420px;
+    overflow-y: auto;
+    font-size: 10.5px;
+    line-height: 1.6;
+    background: #0d1117;
+    border-top: 1px solid #21262d;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+    .cc-chat-modal {
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        transform: none;
+        border-radius: 0;
+    }
+
+    .cc-chat-modal.cc-open {
+        transform: none;
+    }
+
+    #cc-chat-root #cc-chat-fab {
+        bottom: 16px;
+        right: 16px;
+    }
+}

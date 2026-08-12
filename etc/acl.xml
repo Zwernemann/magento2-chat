@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Acl/etc/acl.xsd">
+    <acl>
+        <resources>
+            <resource id="Magento_Backend::admin">
+                <resource id="Zwernemann_Chat::conversations"
+                          title="Chat"
+                          sortOrder="90">
+                    <resource id="Zwernemann_Chat::dashboard"
+                              title="Dashboard (KPIs)"
+                              sortOrder="5"/>
+                </resource>
+            </resource>
+        </resources>
+    </acl>
+</config>
