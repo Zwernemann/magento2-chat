@@ -1,4 +1,4 @@
-# Zwernemann_Chat: AI Chat for Magento 2 (free & open source)
+# Zwernemann_Chat: AI Chat for Magento 2 
 
 *Deutsche Version: [README.de.md](README.de.md)*
 
