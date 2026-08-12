@@ -1,5 +1,5 @@
 {
-    "name": "zwernemann/module-chat",
+    "name": "zwernemann/magento2-chat",
     "description": "AI Chat for Magento 2 – free, open-source conversational AI assistant for the storefront (RAG product search + Anthropic Claude)",
     "type": "magento2-module",
     "license": "OSL-3.0",
