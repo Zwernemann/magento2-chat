@@ -3,7 +3,7 @@
     "description": "AI Chat for Magento 2 – free, open-source conversational AI assistant for the storefront (RAG product search + Anthropic Claude)",
     "type": "magento2-module",
     "license": "OSL-3.0",
-    "version": "1.0.0",
+
     "require": {
         "php": ">=8.1",
         "magento/framework": "*",
