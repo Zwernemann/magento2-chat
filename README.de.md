@@ -313,7 +313,7 @@ Installieren oder Entfernen des Premium-Moduls den Code dieses Moduls nie.
 - Erstveröffentlichung des kostenlosen, quelloffenen KI-Chat-Moduls, herausgelöst aus der Zwernemann-ConversationalCommerce-Engine.
 - WebChat-Widget, semantische Produktsuche (RAG), agentische Commerce-Tools, Konversationsspeicherung und ein KPI-Dashboard.
 - Anthropic Claude als eingebauter Provider; Mistral und Gemini über das Premium-Modul verfügbar.
-- Getestet mit Magento 2.4.6 bis 2.4.8-p1.
+- Getestet mit Magento 2.4.8.
 
 ## Kontakt & Support
 
