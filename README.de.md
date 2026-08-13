@@ -108,7 +108,7 @@ Alle drei bieten kostenlose Kontingente oder Guthaben, die zum Testen ausreichen
 ## Installation
 
 ```bash
-composer require zwernemann/module-chat
+composer require zwernemann/magento2-chat
 bin/magento module:enable Zwernemann_Chat
 bin/magento setup:upgrade
 bin/magento setup:di:compile
@@ -305,6 +305,25 @@ Das freie Modul besitzt die Nachrichten-Pipeline (`MessageProcessor`) sowie die
 Speicher-, LLM-, RAG- und Tool-Schichten. Premium-Verhalten wird über klar
 definierte Nahtstellen eingespielt statt fest verdrahtet. Deshalb berührt das
 Installieren oder Entfernen des Premium-Moduls den Code dieses Moduls nie.
+
+## Versionsverlauf
+
+### 1.0.0
+
+- Erstveröffentlichung des kostenlosen, quelloffenen KI-Chat-Moduls, herausgelöst aus der Zwernemann-ConversationalCommerce-Engine.
+- WebChat-Widget, semantische Produktsuche (RAG), agentische Commerce-Tools, Konversationsspeicherung und ein KPI-Dashboard.
+- Anthropic Claude als eingebauter Provider; Mistral und Gemini über das Premium-Modul verfügbar.
+- Getestet mit Magento 2.4.6 bis 2.4.8-p1.
+
+## Kontakt & Support
+
+**Zwernemann Medienentwicklung**\
+Martin Zwernemann\
+79730 Murg, Deutschland
+
+[Zur Webseite](https://www.zwernemann.de/ki-chat-fur-magento-2-kostenlos-open-source/)
+
+Bei Fragen, Problemen oder Ideen für neue Funktionen melden Sie sich gerne.
 
 ## Lizenz
 

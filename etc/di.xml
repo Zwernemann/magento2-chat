@@ -96,6 +96,15 @@
             <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
         </arguments>
     </type>
+    <!-- "Active Provider" dropdown options. Premium merges Mistral and Gemini into
+         this array so the dropdown always matches the wired provider pool. -->
+    <type name="Zwernemann\Chat\Model\Config\Source\LlmProvider">
+        <arguments>
+            <argument name="providers" xsi:type="array">
+                <item name="anthropic" xsi:type="string">Anthropic Claude</item>
+            </argument>
+        </arguments>
+    </type>
     <type name="Zwernemann\Chat\Model\Llm\IntentProcessor">
         <arguments>
             <argument name="logger" xsi:type="object">Zwernemann\Chat\Logger\Logger</argument>
