@@ -297,7 +297,7 @@ premium module never touches this module's code.
 
 ## Version History
 
-### 1.0.0
+### 1.0.1
 
 - Initial release of the free, open-source AI chat module, carved out of the Zwernemann ConversationalCommerce engine.
 - WebChat widget, semantic product search (RAG), agentic commerce tools, conversation storage and a KPI dashboard.
