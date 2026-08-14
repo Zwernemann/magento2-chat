@@ -302,7 +302,7 @@ premium module never touches this module's code.
 - Initial release of the free, open-source AI chat module, carved out of the Zwernemann ConversationalCommerce engine.
 - WebChat widget, semantic product search (RAG), agentic commerce tools, conversation storage and a KPI dashboard.
 - Anthropic Claude as the built-in provider; Mistral and Gemini available through the premium module.
-- Tested with Magento 2.4.8.
+- Tested with Magento 2.4.7 and 2.4.8.
 
 ## Contact & Support
 
