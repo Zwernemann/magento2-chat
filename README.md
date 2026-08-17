@@ -26,6 +26,8 @@ access to customers, orders, products and inventory as the shop's own checkout.
 Nothing leaves your system except the API calls to the language model and the
 embedding service.
 
+![Screenshot](docs/images/AI_Chat04.png)
+
 ## More than a chatbot
 
 A typical support chatbot matches keywords against a list of canned answers. This
